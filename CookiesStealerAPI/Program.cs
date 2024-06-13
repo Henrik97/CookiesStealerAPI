@@ -12,7 +12,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin",
         policy =>
         {
-            policy.WithOrigins("http://http://dtu-15.csis-tigerteam.com")
+            policy.WithOrigins("http://dtu-15.csis-tigerteam.com")
                   .AllowAnyMethod()
                   .AllowAnyHeader();
         });
